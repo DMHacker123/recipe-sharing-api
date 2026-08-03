@@ -1,22 +1,20 @@
-const swaggerJsdoc = require("swagger-jsdoc");
-const swaggerUi = require("swagger-ui-express");
-const swaggerSpec = require("./swagger");
-
-app.use(
-  "/api-docs",
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerSpec)
-);
+const swaggerJsDoc = require('swagger-jsdoc');
 
 const options = {
   definition: {
-    openapi: "3.0.0",
+    openapi: '3.0.0',
     info: {
-      title: "Recipe Sharing API",
-      version: "1.0.0"
-    }
+      title: 'Recipe Sharing API',
+      version: '1.0.0',
+      description: 'API for sharing and managing recipes'
+    },
+    servers: [
+      {
+        url: 'http://localhost:3000'
+      }
+    ]
   },
-  apis: ["./routes/*.js"]
+  apis: ['./routes/*.js']
 };
 
-module.exports = swaggerJsdoc(options);
+module.exports = swaggerJsDoc(options);
