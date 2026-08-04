@@ -10,7 +10,9 @@ const options = {
     },
     servers: [
       {
-        url: 'http://localhost:3000'
+        url: process.env.NODE_ENV === 'production'
+          ? 'https://recipe-sharing-api-nl1p.onrender.com'
+          : 'http://localhost:3000'
       }
     ]
   },
