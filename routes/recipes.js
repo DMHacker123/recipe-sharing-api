@@ -25,10 +25,12 @@ router.get('/', async (req, res) => {
 
     res.status(200).json(recipes);
   } catch (error) {
-    res.status(500).json({
-      message: error.message
-    });
-  }
+  console.error(error);
+
+  res.status(500).json({
+    message: error.message
+  });
+}
 });
 
 /**
