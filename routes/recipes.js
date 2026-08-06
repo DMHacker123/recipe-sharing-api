@@ -74,4 +74,62 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /recipes:
+ *   post:
+ *     summary: Create a new recipe
+ *     tags:
+ *       - Recipes
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               ingredients:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               instructions:
+ *                 type: string
+ *               prepTime:
+ *                 type: number
+ *               category:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Recipe created
+ */
+router.post('/', async (req, res) => {
+  try {
+    const db = getDB();
+
+    const recipe = {
+      title: req.body.title,
+      ingredients: req.body.ingredients,
+      instructions: req.body.instructions,
+      prepTime: req.body.prepTime,
+      category: req.body.category
+    };
+
+    const result = await db
+      .collection('recipes')
+      .insertOne(recipe);
+
+    res.status(201).json({
+      message: 'Recipe created successfully',
+      recipeId: result.insertedId
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      message: error.message
+    });
+  }
+});
+
 module.exports = router;
