@@ -1,3 +1,13 @@
+// Fix for local dev: some networks/ISPs block the DNS SRV lookup that
+// mongodb+srv:// connection strings rely on, causing ECONNREFUSED errors.
+// Forcing Google's public DNS servers resolves it. Safe to leave in for
+// everyone — it only overrides DNS resolution for this Node process,
+// doesn't affect your system DNS, and won't cause issues on Render.
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '8.8.4.4']);
+
+
+
 const { MongoClient } = require('mongodb');
 
 let client;
