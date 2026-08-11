@@ -13,6 +13,8 @@ const { ObjectId } = require('mongodb');
  *     responses:
  *       200:
  *         description: List of recipes
+ *       500:
+ *         description: Server error
  */
 router.get('/', async (req, res) => {
   try {
@@ -25,12 +27,11 @@ router.get('/', async (req, res) => {
 
     res.status(200).json(recipes);
   } catch (error) {
-  console.error(error);
-
-  res.status(500).json({
-    message: error.message
-  });
-}
+    console.error(error);
+    res.status(500).json({
+      message: 'Failed to retrieve recipes.'
+    });
+  }
 });
 
 /**
@@ -46,30 +47,44 @@ router.get('/', async (req, res) => {
  *         required: true
  *         schema:
  *           type: string
+ *         description: MongoDB recipe ID
  *     responses:
  *       200:
  *         description: Recipe found
+ *       400:
+ *         description: Invalid recipe ID
  *       404:
  *         description: Recipe not found
+ *       500:
+ *         description: Server error
  */
 router.get('/:id', async (req, res) => {
   try {
+    const { id } = req.params;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({
+        message: 'Invalid recipe ID.'
+      });
+    }
+
     const db = getDB();
 
     const recipe = await db
       .collection('recipes')
-      .findOne({ _id: new ObjectId(req.params.id) });
+      .findOne({ _id: new ObjectId(id) });
 
     if (!recipe) {
       return res.status(404).json({
-        message: 'Recipe not found'
+        message: 'Recipe not found.'
       });
     }
 
     res.status(200).json(recipe);
   } catch (error) {
+    console.error(error);
     res.status(500).json({
-      message: error.message
+      message: 'Failed to retrieve recipe.'
     });
   }
 });
@@ -87,6 +102,12 @@ router.get('/:id', async (req, res) => {
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - title
+ *               - ingredients
+ *               - instructions
+ *               - prepTime
+ *               - category
  *             properties:
  *               title:
  *                 type: string
@@ -103,17 +124,42 @@ router.get('/:id', async (req, res) => {
  *     responses:
  *       201:
  *         description: Recipe created
+ *       400:
+ *         description: Invalid request
+ *       500:
+ *         description: Server error
  */
 router.post('/', async (req, res) => {
   try {
+    const {
+      title,
+      ingredients,
+      instructions,
+      prepTime,
+      category
+    } = req.body;
+
+    if (
+      !title ||
+      !Array.isArray(ingredients) ||
+      ingredients.length === 0 ||
+      !instructions ||
+      prepTime === undefined ||
+      !category
+    ) {
+      return res.status(400).json({
+        message: 'All recipe fields are required.'
+      });
+    }
+
     const db = getDB();
 
     const recipe = {
-      title: req.body.title,
-      ingredients: req.body.ingredients,
-      instructions: req.body.instructions,
-      prepTime: req.body.prepTime,
-      category: req.body.category
+      title,
+      ingredients,
+      instructions,
+      prepTime,
+      category
     };
 
     const result = await db
@@ -121,13 +167,185 @@ router.post('/', async (req, res) => {
       .insertOne(recipe);
 
     res.status(201).json({
-      message: 'Recipe created successfully',
+      message: 'Recipe created successfully.',
       recipeId: result.insertedId
     });
-
   } catch (error) {
+    console.error(error);
     res.status(500).json({
-      message: error.message
+      message: 'Failed to create recipe.'
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /recipes/{id}:
+ *   put:
+ *     summary: Update a recipe
+ *     tags:
+ *       - Recipes
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: MongoDB recipe ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - ingredients
+ *               - instructions
+ *               - prepTime
+ *               - category
+ *             properties:
+ *               title:
+ *                 type: string
+ *               ingredients:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               instructions:
+ *                 type: string
+ *               prepTime:
+ *                 type: number
+ *               category:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Recipe updated
+ *       400:
+ *         description: Invalid recipe ID or request
+ *       404:
+ *         description: Recipe not found
+ *       500:
+ *         description: Server error
+ */
+router.put('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      title,
+      ingredients,
+      instructions,
+      prepTime,
+      category
+    } = req.body;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({
+        message: 'Invalid recipe ID.'
+      });
+    }
+
+    if (
+      !title ||
+      !Array.isArray(ingredients) ||
+      ingredients.length === 0 ||
+      !instructions ||
+      prepTime === undefined ||
+      !category
+    ) {
+      return res.status(400).json({
+        message: 'All recipe fields are required.'
+      });
+    }
+
+    const db = getDB();
+
+    const result = await db
+      .collection('recipes')
+      .updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: {
+            title,
+            ingredients,
+            instructions,
+            prepTime,
+            category
+          }
+        }
+      );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({
+        message: 'Recipe not found.'
+      });
+    }
+
+    res.status(200).json({
+      message: 'Recipe updated successfully.'
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: 'Failed to update recipe.'
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /recipes/{id}:
+ *   delete:
+ *     summary: Delete a recipe
+ *     tags:
+ *       - Recipes
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: MongoDB recipe ID
+ *     responses:
+ *       200:
+ *         description: Recipe deleted
+ *       400:
+ *         description: Invalid recipe ID
+ *       404:
+ *         description: Recipe not found
+ *       500:
+ *         description: Server error
+ */
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({
+        message: 'Invalid recipe ID.'
+      });
+    }
+
+    const db = getDB();
+
+    const result = await db
+      .collection('recipes')
+      .deleteOne({
+        _id: new ObjectId(id)
+      });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({
+        message: 'Recipe not found.'
+      });
+    }
+
+    res.status(200).json({
+      message: 'Recipe deleted successfully.'
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: 'Failed to delete recipe.'
     });
   }
 });
