@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { getDB } = require('../database/connect');
 const { ObjectId } = require('mongodb');
+const authenticateToken = require('../middleware/auth');
 
 /**
  * @swagger
@@ -99,6 +100,8 @@ router.get('/reviews/:reviewId', async (req, res) => {
  *     summary: Create a review for a recipe
  *     tags:
  *       - Reviews
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: recipeId
@@ -127,12 +130,16 @@ router.get('/reviews/:reviewId', async (req, res) => {
  *         description: Review created
  *       400:
  *         description: Invalid request
+ *       401:
+ *         description: Access token required
+ *       403:
+ *         description: Invalid or expired token
  *       404:
  *         description: Recipe not found
  *       500:
  *         description: Server error
  */
-router.post('/recipes/:recipeId/reviews', async (req, res) => {
+router.post('/recipes/:recipeId/reviews', authenticateToken, async (req, res) => {
   try {
     const { recipeId } = req.params;
     const { userId, rating, comment } = req.body;
@@ -187,6 +194,8 @@ router.post('/recipes/:recipeId/reviews', async (req, res) => {
  *     summary: Update a review
  *     tags:
  *       - Reviews
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: reviewId
@@ -212,12 +221,16 @@ router.post('/recipes/:recipeId/reviews', async (req, res) => {
  *         description: Review updated
  *       400:
  *         description: Invalid review ID or request
+ *       401:
+ *         description: Access token required
+ *       403:
+ *         description: Invalid or expired token
  *       404:
  *         description: Review not found
  *       500:
  *         description: Server error
  */
-router.put('/reviews/:reviewId', async (req, res) => {
+router.put('/reviews/:reviewId', authenticateToken, async (req, res) => {
   try {
     const { reviewId } = req.params;
     const { rating, comment } = req.body;
@@ -294,7 +307,7 @@ router.delete('/reviews/:reviewId', async (req, res) => {
       return res.status(404).json({ message: 'Review not found.' });
     }
 
-    res.status(200).json({ message: 'Review deleted successfully.' });
+    res.status(200).json({ message: 'Review removed successfully.' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Failed to delete review.' });
