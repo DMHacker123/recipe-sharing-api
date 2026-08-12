@@ -21,6 +21,8 @@
   "homepage": "https://github.com/DMHacker123/recipe-sharing-api#readme",
   "dependencies": {
     "bcryptjs": "^3.0.3",
+    "cache": "^3.0.0",
+    "clean": "^4.0.2",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { getDB } = require('../database/connect');
 const { ObjectId } = require('mongodb');
+const authenticateToken = require('../middleware/auth');
 
 /**
  * @swagger
@@ -96,6 +97,8 @@ router.get('/:id', async (req, res) => {
  *     summary: Create a new recipe
  *     tags:
  *       - Recipes
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -126,10 +129,14 @@ router.get('/:id', async (req, res) => {
  *         description: Recipe created
  *       400:
  *         description: Invalid request
+ *       401:
+ *         description: Access token required
+ *       403:
+ *         description: Invalid or expired token
  *       500:
  *         description: Server error
  */
-router.post('/', async (req, res) => {
+router.post('/', authenticateToken, async (req, res) => {
   try {
     const {
       title,
@@ -185,6 +192,8 @@ router.post('/', async (req, res) => {
  *     summary: Update a recipe
  *     tags:
  *       - Recipes
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -222,12 +231,16 @@ router.post('/', async (req, res) => {
  *         description: Recipe updated
  *       400:
  *         description: Invalid recipe ID or request
+ *       401:
+ *         description: Access token required
+ *       403:
+ *         description: Invalid or expired token
  *       404:
  *         description: Recipe not found
  *       500:
  *         description: Server error
  */
-router.put('/:id', async (req, res) => {
+router.put('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const {

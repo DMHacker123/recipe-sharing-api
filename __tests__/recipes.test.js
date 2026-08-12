@@ -26,4 +26,29 @@ describe('Recipe Sharing API', () => {
     expect(response.statusCode).toBe(200);
     expect(Array.isArray(response.body)).toBe(true);
   });
+
+  test('GET /users should return status 200', async () => {
+    const response = await request(app).get('/users');
+
+    expect(response.statusCode).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+  });
+
+  test('GET /users/:userId/favorites should return status 200', async () => {
+    const response = await request(app).get(
+      '/users/000000000000000000000000/favorites'
+    );
+
+    expect(response.statusCode).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+  });
+
+  test('GET /recipes/:recipeId/reviews should return status 200', async () => {
+    const response = await request(app).get(
+      '/recipes/000000000000000000000000/reviews'
+    );
+
+    expect(response.statusCode).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+  });
 });
