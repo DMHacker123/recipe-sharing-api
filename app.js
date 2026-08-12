@@ -5,6 +5,8 @@ const swaggerSpec = require('./swagger');
 const recipeRoutes = require('./routes/recipes');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
+const reviewRoutes = require('./routes/reviews');
+const favoriteRoutes = require('./routes/favorites');
 
 const app = express();
 
@@ -14,6 +16,8 @@ app.use(express.json());
 app.use('/auth', authRoutes);
 app.use('/users', userRoutes);
 app.use('/recipes', recipeRoutes);
+app.use('/', reviewRoutes);
+app.use('/', favoriteRoutes);
 
 app.get('/', (req, res) => {
   res.send('Recipe Sharing API is running');
