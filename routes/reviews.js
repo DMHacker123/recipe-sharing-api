@@ -116,10 +116,13 @@ router.get('/reviews/:reviewId', async (req, res) => {
  *             type: object
  *             required:
  *               - userId
+ *               - title
  *               - rating
  *               - comment
  *             properties:
  *               userId:
+ *                 type: string
+ *               title:
  *                 type: string
  *               rating:
  *                 type: number
@@ -142,7 +145,7 @@ router.get('/reviews/:reviewId', async (req, res) => {
 router.post('/recipes/:recipeId/reviews', authenticateToken, async (req, res) => {
   try {
     const { recipeId } = req.params;
-    const { userId, rating, comment } = req.body;
+    const { userId, title, rating, comment } = req.body;
 
     if (!ObjectId.isValid(recipeId)) {
       return res.status(400).json({ message: 'Invalid recipe ID.' });
@@ -150,6 +153,10 @@ router.post('/recipes/:recipeId/reviews', authenticateToken, async (req, res) =>
 
     if (!userId || !ObjectId.isValid(userId)) {
       return res.status(400).json({ message: 'Valid userId is required.' });
+    }
+
+    if (!title || typeof title !== 'string') {
+      return res.status(400).json({ message: 'Title is required.' });
     }
 
     if (rating === undefined || typeof rating !== 'number' || rating < 1 || rating > 5) {
@@ -167,12 +174,16 @@ router.post('/recipes/:recipeId/reviews', authenticateToken, async (req, res) =>
       return res.status(404).json({ message: 'Recipe not found.' });
     }
 
+    const now = new Date();
+
     const review = {
       recipeId: new ObjectId(recipeId),
       userId: new ObjectId(userId),
+      title,
       rating,
       comment,
-      createdAt: new Date()
+      createdAt: now,
+      updatedAt: now
     };
 
     const result = await db.collection('reviews').insertOne(review);
@@ -209,9 +220,12 @@ router.post('/recipes/:recipeId/reviews', authenticateToken, async (req, res) =>
  *           schema:
  *             type: object
  *             required:
+ *               - title
  *               - rating
  *               - comment
  *             properties:
+ *               title:
+ *                 type: string
  *               rating:
  *                 type: number
  *               comment:
@@ -233,10 +247,14 @@ router.post('/recipes/:recipeId/reviews', authenticateToken, async (req, res) =>
 router.put('/reviews/:reviewId', authenticateToken, async (req, res) => {
   try {
     const { reviewId } = req.params;
-    const { rating, comment } = req.body;
+    const { title, rating, comment } = req.body;
 
     if (!ObjectId.isValid(reviewId)) {
       return res.status(400).json({ message: 'Invalid review ID.' });
+    }
+
+    if (!title || typeof title !== 'string') {
+      return res.status(400).json({ message: 'Title is required.' });
     }
 
     if (rating === undefined || typeof rating !== 'number' || rating < 1 || rating > 5) {
@@ -253,7 +271,7 @@ router.put('/reviews/:reviewId', authenticateToken, async (req, res) => {
       .collection('reviews')
       .updateOne(
         { _id: new ObjectId(reviewId) },
-        { $set: { rating, comment, updatedAt: new Date() } }
+        { $set: { title, rating, comment, updatedAt: new Date() } }
       );
 
     if (result.matchedCount === 0) {
@@ -307,7 +325,7 @@ router.delete('/reviews/:reviewId', async (req, res) => {
       return res.status(404).json({ message: 'Review not found.' });
     }
 
-    res.status(200).json({ message: 'Review removed successfully.' });
+    res.status(200).json({ message: 'Review deleted successfully.' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Failed to delete review.' });
